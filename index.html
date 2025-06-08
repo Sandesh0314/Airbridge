@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AirBridge Web</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0ff" />
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <script src="https://cdn.jsdelivr.net/npm/peerjs@1.3.1/dist/peerjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.10/minified/html5-qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .glow {
+      color: #0ff;
+      text-shadow: 0 0 5px #0ff, 0 0 10px #0ff, 0 0 20px #0ff;
+    }
+    .glass {
+      backdrop-filter: blur(10px);
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 1rem;
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    .drop-area {
+      border: 2px dashed #60a5fa;
+      background: rgba(255,255,255,0.05);
+      transition: all 0.3s;
+    }
+    .drop-area:hover {
+      background: rgba(255,255,255,0.1);
+      border-color: #3b82f6;
+    }
+    #progressBar {
+      height: 8px;
+      border-radius: 4px;
+      overflow: hidden;
+      background: #222;
+    }
+    #progressBarFill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(to right, #00f260, #0575e6);
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-blue-900 to-gray-900 min-h-screen text-white flex items-center justify-center">
+  <div id="landing" class="text-center p-10 animate-fade-in">
+    <h1 class="text-5xl font-bold glow mb-6 animate-pulse">AirBridge Web</h1>
+    <button onclick="showMain()" class="mt-5 px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-full text-xl transition-all">Enter</button>
+  </div>
+
+  <div id="mainUI" class="hidden flex flex-col items-center space-y-6 p-6">
+    <div class="glass p-6 animate-fade-in">
+      <h2 class="text-3xl font-semibold mb-4">Choose Action</h2>
+      <div class="flex space-x-4">
+        <button onclick="showSend()" class="px-6 py-3 bg-green-500 hover:bg-green-600 rounded-xl text-lg">📤 Send File</button>
+        <button onclick="showReceive()" class="px-6 py-3 bg-indigo-500 hover:bg-indigo-600 rounded-xl text-lg">📥 Receive File</button>
+      </div>
+    </div>
+
+    <div id="sendUI" class="hidden w-full max-w-md glass p-6 flex flex-col space-y-4 animate-fade-in">
+      <label for="fileInput" class="drop-area cursor-pointer text-center py-6 px-4 rounded-xl">
+        <span class="text-lg">📁 Tap or Drag to select files (Max 30)</span>
+        <input id="fileInput" type="file" accept="image/*,video/*,.pdf,.doc,.zip" multiple onchange="handleFileSelection()" class="hidden" />
+      </label>
+
+      <ul id="fileList" class="text-left text-sm mb-2 space-y-1 list-disc list-inside"></ul>
+
+      <button id="sendNowBtn" onclick="startQRScan()" class="hidden bg-gradient-to-r from-green-400 to-blue-500 text-white py-2 px-6 rounded-lg shadow-lg hover:scale-105 transition-all">🚀 Send Now</button>
+
+      <div id="qrScanner" class="hidden w-full h-64 rounded-md overflow-hidden mt-4"></div>
+      <div id="progressBar" class="w-full hidden">
+        <div id="progressBarFill"></div>
+      </div>
+    </div>
+
+    <div id="receiveUI" class="hidden glass p-4 text-center animate-fade-in">
+      <h3 class="text-lg mb-2">Scan This QR Code</h3>
+      <canvas id="qrCanvas"></canvas>
+      <p id="sessionIdText" class="text-xs mt-2"></p>
+    </div>
+  </div>
+
+  <script>
+    let peer, conn;
+    let selectedFiles = [];
+    let scanner;
+
+    function showMain() {
+      document.getElementById('landing').classList.add('hidden');
+      document.getElementById('mainUI').classList.remove('hidden');
+    }
+
+    function showSend() {
+      document.getElementById('sendUI').classList.remove('hidden');
+      document.getElementById('receiveUI').classList.add('hidden');
+    }
+
+    function showReceive() {
+      document.getElementById('receiveUI').classList.remove('hidden');
+      document.getElementById('sendUI').classList.add('hidden');
+      setupReceiver();
+    }
+
+    function handleFileSelection() {
+      const input = document.getElementById('fileInput');
+      const list = document.getElementById('fileList');
+      const sendNowBtn = document.getElementById('sendNowBtn');
+
+      if (input.files.length > 30) {
+        alert('Please select up to 30 files.');
+        input.value = '';
+        return;
+      }
+
+      selectedFiles = [...input.files];
+      list.innerHTML = '';
+      selectedFiles.forEach(file => {
+        const li = document.createElement('li');
+        li.textContent = `${file.name} (${Math.round(file.size / 1024)} KB)`;
+        list.appendChild(li);
+      });
+
+      sendNowBtn.classList.remove('hidden');
+    }
+
+    function startQRScan() {
+      document.getElementById('qrScanner').classList.remove('hidden');
+      scanner = new Html5Qrcode("qrScanner");
+      scanner.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: 250 },
+        sessionId => {
+          scanner.stop().then(() => {
+            document.getElementById('qrScanner').classList.add('hidden');
+            connectToReceiver(sessionId);
+          });
+        },
+        err => {}
+      );
+    }
+
+    function connectToReceiver(id) {
+      peer = new Peer();
+      peer.on('open', () => {
+        conn = peer.connect(id);
+        conn.on('open', () => {
+          let sent = 0;
+          const progressBar = document.getElementById('progressBar');
+          const progressBarFill = document.getElementById('progressBarFill');
+          progressBar.classList.remove('hidden');
+
+          function sendNext(index) {
+            if (index >= selectedFiles.length) {
+              alert("📤 File(s) sent successfully!");
+              return;
+            }
+            const file = selectedFiles[index];
+            const reader = new FileReader();
+            reader.onload = () => {
+              conn.send({ name: file.name, data: reader.result });
+              progressBarFill.style.width = `${((index + 1) / selectedFiles.length) * 100}%`;
+              sendNext(index + 1);
+            };
+            reader.readAsArrayBuffer(file);
+          }
+
+          sendNext(0);
+        });
+      });
+    }
+
+    function setupReceiver() {
+      const sessionId = Math.random().toString(36).substring(2, 10);
+      peer = new Peer(sessionId);
+      document.getElementById('sessionIdText').innerText = `Session ID: ${sessionId}`;
+      QRCode.toCanvas(document.getElementById('qrCanvas'), sessionId);
+
+      peer.on('connection', connection => {
+        connection.on('data', file => {
+          const blob = new Blob([file.data]);
+          const link = document.createElement('a');
+          link.href = URL.createObjectURL(blob);
+          link.download = file.name;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+
+          const list = document.createElement('p');
+          list.textContent = `✅ Received: ${file.name}`;
+          document.getElementById('receiveUI').appendChild(list);
+        });
+      });
+    }
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then(reg => console.log('✅ Service Worker registered'))
+          .catch(err => console.error('❌ Service Worker registration failed:', err));
+      });
+    }
+  </script>
+</body>
+</html>
