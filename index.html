@@ -2,11 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>AirBridge Web</title>
-  <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#0ff" />
-  <link rel="apple-touch-icon" href="icon-192.jpg" />
   <script src="https://cdn.jsdelivr.net/npm/peerjs@1.3.1/dist/peerjs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.10/minified/html5-qrcode.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
@@ -43,251 +40,210 @@
       width: 0%;
       background: linear-gradient(to right, #00f260, #0575e6);
     }
+    #qrScannerContainer {
+      width: 100%;
+      height: 300px;
+      border-radius: 0.5rem;
+      overflow: hidden;
+      background: black;
+      margin-top: 1rem;
+    }
+    #cancelBtn {
+      margin-top: 0.5rem;
+      padding: 0.5rem 1.5rem;
+      background: #ef4444;
+      border: none;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      cursor: pointer;
+      color: white;
+      display: none;
+    }
+    #cancelBtn:hover {
+      background: #dc2626;
+    }
   </style>
-  <meta name="referrer" content="no-referrer" />
 </head>
 <body class="bg-gradient-to-br from-blue-900 to-gray-900 min-h-screen text-white flex items-center justify-center">
-  <div id="landing" class="text-center p-10 animate-fade-in">
-    <h1 class="text-5xl font-bold glow mb-6 animate-pulse">AirBridge Web</h1>
-    <button onclick="showMain()" class="mt-5 px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-full text-xl transition-all">Enter</button>
-  </div>
 
-  <div id="mainUI" class="hidden flex flex-col items-center space-y-6 p-6">
-    <div class="glass p-6 animate-fade-in">
-      <h2 class="text-3xl font-semibold mb-4">Choose Action</h2>
-      <div class="flex space-x-4">
-        <button onclick="showSend()" class="px-6 py-3 bg-green-500 hover:bg-green-600 rounded-xl text-lg">📤 Send File</button>
-        <button onclick="showReceive()" class="px-6 py-3 bg-indigo-500 hover:bg-indigo-600 rounded-xl text-lg">📥 Receive File</button>
-      </div>
-    </div>
+<div id="landing" class="text-center p-10">
+  <h1 class="text-5xl font-bold glow mb-6">AirBridge Web</h1>
+  <button onclick="showMain()" class="mt-5 px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-full text-xl">Enter</button>
+</div>
 
-    <div id="sendUI" class="hidden w-full max-w-md glass p-6 flex flex-col space-y-4 animate-fade-in">
-      <label for="fileInput" class="drop-area cursor-pointer text-center py-6 px-4 rounded-xl">
-        <span class="text-lg">📁 Tap or Drag to select files (Max 30)</span>
-        <input id="fileInput" type="file" accept="image/*,video/*,.pdf,.doc,.zip" multiple onchange="handleFileSelection()" class="hidden" />
-      </label>
-
-      <ul id="fileList" class="text-left text-sm mb-2 space-y-1 list-disc list-inside"></ul>
-
-      <button id="sendNowBtn" onclick="startQRScan()" class="hidden bg-gradient-to-r from-green-400 to-blue-500 text-white py-2 px-6 rounded-lg shadow-lg hover:scale-105 transition-all">🚀 Send Now</button>
-
-      <div id="qrScanner" class="hidden w-full h-64 rounded-md overflow-hidden mt-4"></div>
-      <div id="progressBar" class="w-full hidden">
-        <div id="progressBarFill"></div>
-      </div>
-    </div>
-    
-
-    <div id="receiveUI" class="hidden glass p-4 text-center animate-fade-in">
-      <h3 class="text-lg mb-2">Scan This QR Code</h3>
-      <canvas id="qrCanvas"></canvas>
-      <p id="sessionIdText" class="text-xs mt-2"></p>
-      <div id="receivedFiles" class="mt-4 text-left max-h-48 overflow-y-auto"></div>
+<div id="mainUI" class="hidden flex flex-col items-center space-y-6 p-6">
+  <div class="glass p-6">
+    <h2 class="text-3xl font-semibold mb-4">Choose Action</h2>
+    <div class="flex space-x-4">
+      <button onclick="showSend()" class="px-6 py-3 bg-green-500 hover:bg-green-600 rounded-xl text-lg">📤 Send File</button>
+      <button onclick="showReceive()" class="px-6 py-3 bg-indigo-500 hover:bg-indigo-600 rounded-xl text-lg">📥 Receive File</button>
     </div>
   </div>
-  <script>
+
+  <div id="sendUI" class="hidden w-full max-w-md glass p-6 flex flex-col space-y-4">
+    <label for="fileInput" class="drop-area cursor-pointer text-center py-6 px-4 rounded-xl">
+      <span class="text-lg">📁 Tap or Drag to select files (Max 30)</span>
+      <input id="fileInput" type="file" accept="image/*,video/*,.pdf,.doc,.zip" multiple onchange="handleFileSelection()" class="hidden" />
+    </label>
+
+    <ul id="fileList" class="text-left text-sm mb-2 space-y-1 list-disc list-inside"></ul>
+    <button id="sendNowBtn" onclick="startQRScan()" class="hidden bg-gradient-to-r from-green-400 to-blue-500 text-white py-2 px-6 rounded-lg shadow-lg hover:scale-105">🚀 Send Now</button>
+
+    <div id="qrScannerContainer" class="hidden"></div>
+    <button id="cancelBtn" onclick="cancelQR()">Cancel Scan</button>
+
+    <div id="progressBar" class="w-full hidden">
+      <div id="progressBarFill"></div>
+    </div>
+  </div>
+
+  <div id="receiveUI" class="hidden glass p-4 text-center">
+    <h3 class="text-lg mb-2">Scan This QR Code</h3>
+    <canvas id="qrCanvas"></canvas>
+    <p id="sessionIdText" class="text-xs mt-2"></p>
+    <div id="receivedFiles" class="mt-4 text-left max-h-48 overflow-y-auto"></div>
+  </div>
+</div>
+
+<script>
+  let peer, conn, selectedFiles = [];
+  let scanner = null;
+
+  function showMain() {
+    document.getElementById('landing').classList.add('hidden');
+    document.getElementById('mainUI').classList.remove('hidden');
+  }
+
+  function showSend() {
+    document.getElementById('sendUI').classList.remove('hidden');
+    document.getElementById('receiveUI').classList.add('hidden');
+  }
+
+  function showReceive() {
+    document.getElementById('receiveUI').classList.remove('hidden');
+    document.getElementById('sendUI').classList.add('hidden');
+    setupReceiver();
+  }
+
+  function handleFileSelection() {
+    const input = document.getElementById('fileInput');
+    const list = document.getElementById('fileList');
+    const sendNowBtn = document.getElementById('sendNowBtn');
+
+    if (input.files.length > 30) {
+      alert('Please select up to 30 files.');
+      input.value = '';
+      return;
+    }
+
+    selectedFiles = [...input.files];
+    list.innerHTML = '';
+    selectedFiles.forEach(file => {
+      const li = document.createElement('li');
+      li.textContent = `${file.name} (${Math.round(file.size / 1024)} KB)`;
+      list.appendChild(li);
+    });
+
+    sendNowBtn.classList.remove('hidden');
+  }
+
+  function startQRScan() {
+    const container = document.getElementById('qrScannerContainer');
+    const cancelBtn = document.getElementById('cancelBtn');
+
     navigator.mediaDevices.getUserMedia({ video: true })
-    .then(() => console.log("✅ Camera access granted"))
-    .catch(err => alert("❌ Camera access denied: " + err));
+      .then(() => {
+        container.classList.remove('hidden');
+        cancelBtn.style.display = "inline-block";
 
-    function startQRScan() {
-      const scannerDiv = document.getElementById('qrScanner');
-      scannerDiv.classList.remove('hidden');
+        if (scanner) scanner.clear().catch(() => {});
+        scanner = new Html5Qrcode("qrScannerContainer");
 
-      if (scanner) {
-        scanner.clear();
-      }
-
-      scanner = new Html5Qrcode("qrScanner");
-
-      Html5Qrcode.getCameras().then(cameras => {
-        if (cameras && cameras.length) {
+        Html5Qrcode.getCameras().then(cameras => {
+          if (!cameras.length) return alert("No camera found.");
           const camId = cameras[0].id;
+
           scanner.start(
             { deviceId: { exact: camId } },
             { fps: 10, qrbox: 250 },
             sessionId => {
               scanner.stop().then(() => {
                 scanner.clear();
-                scannerDiv.classList.add('hidden');
+                container.classList.add('hidden');
+                cancelBtn.style.display = "none";
                 connectToReceiver(sessionId);
               });
             },
-            error => {
-              console.warn("QR scan error", error);
-            }
+            error => console.warn("Scan error", error)
           ).catch(err => {
-            alert("Camera start error: " + err);
+            alert("Failed to start scanner: " + err);
           });
-        } else {
-          alert("No camera found.");
-        }
-      }).catch(err => {
-        alert("Camera access error: " + err);
-      });
-    }
-  </script>
-
-  <script>
-    let peer, conn;
-    let selectedFiles = [];
-    let scanner;
-
-    function showMain() {
-      document.getElementById('landing').classList.add('hidden');
-      document.getElementById('mainUI').classList.remove('hidden');
-    }
-
-    function showSend() {
-      document.getElementById('sendUI').classList.remove('hidden');
-      document.getElementById('receiveUI').classList.add('hidden');
-    }
-
-    function showReceive() {
-      document.getElementById('receiveUI').classList.remove('hidden');
-      document.getElementById('sendUI').classList.add('hidden');
-      setupReceiver();
-    }
-
-    function handleFileSelection() {
-      const input = document.getElementById('fileInput');
-      const list = document.getElementById('fileList');
-      const sendNowBtn = document.getElementById('sendNowBtn');
-
-      if (input.files.length > 30) {
-        alert('Please select up to 30 files.');
-        input.value = '';
-        return;
-      }
-
-      selectedFiles = [...input.files];
-      list.innerHTML = '';
-      selectedFiles.forEach(file => {
-        const li = document.createElement('li');
-        li.textContent = `${file.name} (${Math.round(file.size / 1024)} KB)`;
-        list.appendChild(li);
-      });
-
-      sendNowBtn.classList.remove('hidden');
-    }
-
-    function startQRScan() {
-      showSend();
-      const scannerDiv = document.getElementById('qrScanner');
-      scannerDiv.classList.remove('hidden');
-
-      if (scanner) {
-        scanner.clear();
-      }
-
-      scanner = new Html5Qrcode("qrScanner");
-      Html5Qrcode.getCameras().then(cameras => {
-        if (cameras && cameras.length) {
-          const camId = cameras[0].id;
-          scanner.start(
-            { deviceId: { exact: camId } },
-            { fps: 10, qrbox: 250 },
-            sessionId => {
-              scanner.stop().then(() => {
-                scanner.clear();
-                scannerDiv.classList.add('hidden');
-                connectToReceiver(sessionId);
-              });
-            },
-            err => {
-              console.warn("QR scan error", err);
-            }
-          );
-        } else {
-          alert("No camera found.");
-        }
-      }).catch(err => {
-        alert("Camera access error: " + err);
-      });
-    }
-
-    function connectToReceiver(id) {
-      peer = new Peer();
-      peer.on('open', () => {
-        conn = peer.connect(id);
-        conn.on('open', () => {
-          const progressBar = document.getElementById('progressBar');
-          const progressBarFill = document.getElementById('progressBarFill');
-          progressBar.classList.remove('hidden');
-
-          function sendNext(index) {
-            if (index >= selectedFiles.length) {
-              alert("📤 File(s) sent successfully!");
-              progressBar.classList.add('hidden');
-              return;
-            }
-            const file = selectedFiles[index];
-            const reader = new FileReader();
-            reader.onload = () => {
-              conn.send({ type: "file-meta", name: file.name, size: file.size, index });
-              conn.send({ type: "file-data", data: reader.result });
-              progressBarFill.style.width = `${((index + 1) / selectedFiles.length) * 100}%`;
-              sendNext(index + 1);
-            };
-            reader.readAsArrayBuffer(file);
-          }
-
-          sendNext(0);
         });
+      })
+      .catch(err => {
+        alert("Camera access denied. Please allow it.");
       });
+  }
+
+  function cancelQR() {
+    if (scanner) {
+      scanner.stop().then(() => {
+        scanner.clear().catch(() => {});
+        document.getElementById('qrScannerContainer').classList.add('hidden');
+        document.getElementById('cancelBtn').style.display = "none";
+      }).catch(console.error);
     }
+  }
 
-    function setupReceiver() {
-      const sessionId = Math.random().toString(36).substring(2, 10);
-      peer = new Peer(sessionId);
-      document.getElementById('sessionIdText').innerText = `Session ID: ${sessionId}`;
-      QRCode.toCanvas(document.getElementById('qrCanvas'), sessionId);
+  function connectToReceiver(id) {
+    peer = new Peer();
+    peer.on('open', () => {
+      conn = peer.connect(id);
+      conn.on('open', () => {
+        const progressBar = document.getElementById('progressBar');
+        const fill = document.getElementById('progressBarFill');
+        progressBar.classList.remove('hidden');
 
-      let receivedFiles = [];
-      let currentFile = null;
-      let receivedBuffer = [];
-
-      peer.on('connection', connection => {
-        conn = connection;
-        receivedFiles = [];
-        currentFile = null;
-        receivedBuffer = [];
-        document.getElementById('receivedFiles').innerHTML = '';
-
-        conn.on('data', data => {
-          if (data.type === "file-meta") {
-            currentFile = { name: data.name, size: data.size, index: data.index, receivedSize: 0 };
-            receivedBuffer = [];
-          } else if (data.type === "file-data") {
-            receivedBuffer.push(data.data);
-            currentFile.receivedSize += data.data.byteLength;
-
-            if (currentFile.receivedSize >= currentFile.size) {
-              // All chunks received, reconstruct file
-              const blob = new Blob(receivedBuffer);
-              receivedFiles[currentFile.index] = { blob, name: currentFile.name };
-              displayReceivedFiles(receivedFiles);
-              currentFile = null;
-              receivedBuffer = [];
-            }
+        let index = 0;
+        function sendNext() {
+          if (index >= selectedFiles.length) {
+            alert("📤 File(s) sent successfully!");
+            progressBar.classList.add('hidden');
+            return;
           }
-        });
+          const file = selectedFiles[index];
+          const reader = new FileReader();
+          reader.onload = () => {
+            conn.send({ name: file.name, data: reader.result });
+            fill.style.width = `${((index + 1) / selectedFiles.length) * 100}%`;
+            index++;
+            sendNext();
+          };
+          reader.readAsArrayBuffer(file);
+        }
+        sendNext();
       });
-    }
+    });
+  }
 
-    function displayReceivedFiles(files) {
-      const container = document.getElementById('receivedFiles');
-      container.innerHTML = '';
-      files.forEach((file, i) => {
-        if (!file) return;
-        const url = URL.createObjectURL(file.blob);
-        const div = document.createElement('div');
-        div.className = 'mb-2';
-        div.innerHTML = `<a href="${url}" download="${file.name}" class="text-blue-400 hover:underline">${file.name}</a>`;
-        container.appendChild(div);
+  function setupReceiver() {
+    const sessionId = Math.random().toString(36).substring(2, 10);
+    peer = new Peer(sessionId);
+    document.getElementById('sessionIdText').innerText = `Session ID: ${sessionId}`;
+    QRCode.toCanvas(document.getElementById('qrCanvas'), sessionId);
+    peer.on('connection', connection => {
+      connection.on('data', file => {
+        const blob = new Blob([file.data]);
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = file.name;
+        link.click();
+        const p = document.createElement('p');
+        p.textContent = `✅ Received: ${file.name}`;
+        document.getElementById('receivedFiles').appendChild(p);
       });
-    }
-  </script>
-
+    });
+  }
+</script>
 </body>
 </html>
